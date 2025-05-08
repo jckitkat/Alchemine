@@ -1,0 +1,48 @@
+{
+	"schemaVersion": 1,
+	"id": "alchemy",
+	"version": "${version}",
+	"name": "alchemy",
+	"description": "This is an example description! Tell everyone what your mod is about!",
+	"authors": [
+		"Me!"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/alchemy/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"jckitkat.alchemy.Alchemy",
+			"jckitkat.alchemy.items.AlchemyItems",
+			"jckitkat.alchemy.component.AlchemyComponents",
+			"jckitkat.alchemy.blocks.AlchemyBlocks",
+			"jckitkat.alchemy.blocks.blockEntities.AlchemyBlockEntities"
+		],
+		"client": [
+			"jckitkat.alchemy.AlchemyClient"
+		],
+		"fabric-datagen": [
+			"jckitkat.alchemy.AlchemyDataGenerator"
+		]
+	},
+	"mixins": [
+		"alchemy.mixins.json",
+		{
+			"config": "alchemy.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.16.14",
+		"minecraft": "~1.21.5",
+		"java": ">=21",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}

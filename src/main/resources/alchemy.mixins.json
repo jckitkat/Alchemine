@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "package": "jckitkat.alchemy.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "AlchemicalTooltipMixin",
+    "ExampleMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+	}
+}
