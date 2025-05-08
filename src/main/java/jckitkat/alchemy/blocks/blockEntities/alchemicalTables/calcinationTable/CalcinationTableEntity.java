@@ -5,6 +5,7 @@ import jckitkat.alchemy.blocks.ModBlocks;
 import jckitkat.alchemy.blocks.blockEntities.ImplementedInventory;
 import jckitkat.alchemy.blocks.blockEntities.ModBlockEntities;
 import jckitkat.alchemy.items.ModItems;
+import jckitkat.alchemy.screen.custom.CalcinationScreenHandler;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.minecraft.block.BlockEntityProvider;
 import net.minecraft.block.BlockState;
@@ -86,7 +87,7 @@ public class CalcinationTableEntity extends BlockEntity implements ExtendedScree
 
 	@Override
 	public @Nullable ScreenHandler createMenu(int syncId, PlayerInventory playerInventory, PlayerEntity player) {
-		return null;
+		return new CalcinationScreenHandler(syncId, playerInventory, this, this.propertyDelegate);
 	}
 
 	public void tick(World world1, BlockPos pos, BlockState state1) {
