@@ -30,11 +30,7 @@
 		]
 	},
 	"mixins": [
-		"alchemy.mixins.json",
-		{
-			"config": "alchemy.client.mixins.json",
-			"environment": "client"
-		}
+		"alchemy.mixins.json"
 	],
 	"depends": {
 		"fabricloader": ">=0.16.14",

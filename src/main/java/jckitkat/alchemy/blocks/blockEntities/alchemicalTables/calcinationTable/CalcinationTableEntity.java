@@ -1,16 +1,14 @@
 package jckitkat.alchemy.blocks.blockEntities.alchemicalTables.calcinationTable;
 
-import com.ibm.icu.impl.TextTrieMap;
 import jckitkat.alchemy.blocks.ModBlocks;
 import jckitkat.alchemy.blocks.blockEntities.ImplementedInventory;
 import jckitkat.alchemy.blocks.blockEntities.ModBlockEntities;
 import jckitkat.alchemy.items.ModItems;
 import jckitkat.alchemy.screen.custom.CalcinationScreenHandler;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
-import net.minecraft.block.BlockEntityProvider;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.entity.AbstractFurnaceBlockEntity;
 import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventories;
@@ -31,12 +29,11 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
-public class CalcinationTableEntity extends BlockEntity implements ExtendedScreenHandlerFactory, ImplementedInventory {
-
+public class CalcinationTableEntity extends AbstractFurnaceBlockEntity implements ExtendedScreenHandlerFactory<BlockPos>{
 	private final DefaultedList<ItemStack> inventory = DefaultedList.ofSize(2, ItemStack.EMPTY);
 
-	private final static int INPUT_SLOT = 0;
-	private final static int OUTPUT_SLOT = 1;
+	private static final int INPUT_SLOT = 0;
+	private static final int OUTPUT_SLOT = 1;
 
 	protected final PropertyDelegate propertyDelegate;
 	private int progress = 0;
@@ -44,7 +41,6 @@ public class CalcinationTableEntity extends BlockEntity implements ExtendedScree
 
 	public CalcinationTableEntity(BlockPos pos, BlockState state) {
 		super(ModBlockEntities.CALCINATION_TABLE_ENTITY, pos, state);
-
 		this.propertyDelegate = new PropertyDelegate() {
 			@Override
 			public int get(int index) {
@@ -71,12 +67,7 @@ public class CalcinationTableEntity extends BlockEntity implements ExtendedScree
 	}
 
 	@Override
-	public DefaultedList<ItemStack> getItems() {
-		return inventory;
-	}
-
-	@Override
-	public Object getScreenOpeningData(ServerPlayerEntity player) {
+	public BlockPos getScreenOpeningData(ServerPlayerEntity player) {
 		return this.pos;
 	}
 
@@ -86,26 +77,49 @@ public class CalcinationTableEntity extends BlockEntity implements ExtendedScree
 	}
 
 	@Override
-	public @Nullable ScreenHandler createMenu(int syncId, PlayerInventory playerInventory, PlayerEntity player) {
+	protected Text getContainerName() {
+		return null;
+	}
+
+	@Nullable
+	@Override
+	public ScreenHandler createMenu(int syncId, PlayerInventory playerInventory, PlayerEntity player) {
 		return new CalcinationScreenHandler(syncId, playerInventory, this, this.propertyDelegate);
 	}
 
-	public void tick(World world1, BlockPos pos, BlockState state1) {
+	@Override
+	protected ScreenHandler createScreenHandler(int syncId, PlayerInventory playerInventory) {
+		return new CalcinationScreenHandler(syncId, playerInventory, this, this.propertyDelegate);
+	}
 
-		if (hasRecipe()) {
+	@Override
+	protected void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
+		super.writeNbt(nbt, registryLookup);
+		Inventories.writeNbt(nbt, inventory, registryLookup);
+		nbt.putInt("calcination_table.progress", progress);
+		nbt.putInt("calcination_table.max_progress", maxProgress);
+	}
 
+	@Override
+	protected void readNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
+		Inventories.readNbt(nbt, inventory, registryLookup);
+		progress = nbt.getInt("calcination_table.progress", 0);
+		maxProgress = nbt.getInt("calcination_table.max_progress", 72);
+		super.readNbt(nbt, registryLookup);
+	}
+
+	public void tick(World world, BlockPos pos, BlockState state) {
+		if(hasRecipe()) {
 			increaseCraftingProgress();
-			markDirty(world, pos, state1);
+			markDirty(world, pos, state);
 
-			if (hasCraftingFinished()) {
+			if(hasCraftingFinished()) {
 				craftItem();
 				resetProgress();
 			}
-
 		} else {
 			resetProgress();
 		}
-
 	}
 
 	private void resetProgress() {
@@ -114,9 +128,9 @@ public class CalcinationTableEntity extends BlockEntity implements ExtendedScree
 	}
 
 	private void craftItem() {
-		ItemStack output = new ItemStack(ModItems.SULFUR, 2);
-		this.removeStack(INPUT_SLOT, 1);
+		ItemStack output = new ItemStack(ModItems.SULFUR, 6);
 
+		this.removeStack(INPUT_SLOT, 1);
 		this.setStack(OUTPUT_SLOT, new ItemStack(output.getItem(),
 				this.getStack(OUTPUT_SLOT).getCount() + output.getCount()));
 	}
@@ -131,12 +145,13 @@ public class CalcinationTableEntity extends BlockEntity implements ExtendedScree
 
 	private boolean hasRecipe() {
 		Item input = Items.GUNPOWDER;
-		ItemStack output = new ItemStack(ModItems.SULFUR, 2);
+		ItemStack output = new ItemStack(ModItems.SULFUR, 6);
 
-		return this.getStack(INPUT_SLOT).isOf(input) && canInsertAmountIntoOutputSlot(output.getCount()) && canInsertItemIntoOuputSlot(output);
+		return this.getStack(INPUT_SLOT).isOf(input) &&
+				canInsertAmountIntoOutputSlot(output.getCount()) && canInsertItemIntoOutputSlot(output);
 	}
 
-	private boolean canInsertItemIntoOuputSlot(ItemStack output) {
+	private boolean canInsertItemIntoOutputSlot(ItemStack output) {
 		return this.getStack(OUTPUT_SLOT).isEmpty() || this.getStack(OUTPUT_SLOT).getItem() == output.getItem();
 	}
 
@@ -147,29 +162,14 @@ public class CalcinationTableEntity extends BlockEntity implements ExtendedScree
 		return maxCount >= currentCount + count;
 	}
 
+	@Nullable
 	@Override
-	public @Nullable Packet<ClientPlayPacketListener> toUpdatePacket() {
+	public Packet<ClientPlayPacketListener> toUpdatePacket() {
 		return BlockEntityUpdateS2CPacket.create(this);
 	}
 
 	@Override
-	public NbtCompound toInitialChunkDataNbt(RegistryWrapper.WrapperLookup registries) {
-		return createNbt(registries);
-	}
-
-	@Override
-	protected void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registries) {
-		Inventories.writeNbt(nbt, inventory, registries);
-		nbt.putInt("calcination_table.progress", progress);
-		nbt.putInt("calcination_table.max_progress", maxProgress);
-		super.writeNbt(nbt, registries);
-	}
-
-	@Override
-	protected void readNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registries) {
-		Inventories.readNbt(nbt, inventory, registries);
-		progress = nbt.getInt("calcination_table.progress", 0);
-		maxProgress = nbt.getInt("calcination_table.max_progress", 72);
-		super.readNbt(nbt, registries);
+	public NbtCompound toInitialChunkDataNbt(RegistryWrapper.WrapperLookup registryLookup) {
+		return createNbt(registryLookup);
 	}
 }

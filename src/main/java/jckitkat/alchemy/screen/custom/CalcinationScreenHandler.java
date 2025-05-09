@@ -17,16 +17,14 @@ public class CalcinationScreenHandler extends ScreenHandler {
 
 	private final Inventory inventory;
 	private final PropertyDelegate propertyDelegate;
-	public final CalcinationTableEntity blockEntity;
 
-	CalcinationScreenHandler(int syncId, PlayerInventory inventory, BlockPos pos) {
+	public CalcinationScreenHandler(int syncId, PlayerInventory inventory, BlockPos pos) {
 		this(syncId, inventory, inventory.player.getWorld().getBlockEntity(pos), new ArrayPropertyDelegate(2));
 	}
 
 	public CalcinationScreenHandler(int syncId, PlayerInventory inventory, BlockEntity blockEntity, PropertyDelegate arrayPropertyDelegate) {
 		super(ModScreenHandlers.CALCINATION_SCREEN_HANDLER, syncId);
 		this.inventory = ((Inventory) blockEntity);
-		this.blockEntity = ((CalcinationTableEntity) blockEntity);
 		this.propertyDelegate = arrayPropertyDelegate;
 
 		this.addSlot(new Slot(inventory, 0, 54, 34));
